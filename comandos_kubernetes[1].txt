@@ -1,0 +1,87 @@
+cd authservice
+docker build -t <usuario de docker>/authservice:latest .
+docker push <usuario de docker>/authservice:latest
+cd ..
+
+cd ms-api-gateway
+docker build -t <usuario de docker>/ms-api-gateway:latest .
+docker push <usuario de docker>/ms-api-gateway:latest
+cd ..
+
+cd ms-catalogo
+docker build -t <usuario de docker>/ms-catalogo:latest .
+docker push <usuario de docker>/ms-catalogo:latest
+cd ..
+
+cd ms-eureka-server
+docker build -t <usuario de docker>/ms-eureka-server:latest .
+docker push <usuario de docker>/ms-eureka-server:latest
+cd ..
+
+cd ms-notificaciones
+docker build -t <usuario de docker>/ms-notificaciones:latest .
+docker push <usuario de docker>/ms-notificaciones:latest
+cd ..
+
+cd ms-publicaciones
+docker build -t <usuario de docker>/ms-publicaciones:latest .
+docker push <usuario de docker>/ms-publicaciones:latest
+cd ..
+
+cd ms-sincronizacion
+docker build -t <usuario de docker>/ms-sincronizacion:latest .
+docker push <usuario de docker>/ms-sincronizacion:latest
+cd ..
+
+
+# Base de datos (cockroachdb + init + nodos)
+
+kubectl apply -f cockroachdb-deployment.yaml
+kubectl apply -f cockroachdb-service.yaml
+
+kubectl exec -it cockroachdb-<nombre-del-pod> -- bash (opción 1)
+kubectl exec -it <pod db> -- ./cockroach sql --insecure (opción 2)
+
+cockroach init --insecure --host=cockroachdb-svc
+
+
+CREATE DATABASE publicaciones_db;
+CREATE DATABASE authdb;
+CREATE DATABASE catalogo_db;
+CREATE DATABASE notificaciones_db;
+
+# RabbitMQ
+kubectl apply -f rabbitmq-deployment.yml
+kubectl apply -f rabbitmq-service.yml
+
+# Eureka Server
+kubectl apply -f ms-eureka-server-deployment.yml
+kubectl apply -f ms-eureka-server-service.yml
+
+# Microservicios
+kubectl apply -f ms-notificaciones-deployment.yml
+kubectl apply -f ms-notificaciones-service.yml
+
+kubectl apply -f ms-publicaciones-deployment.yml
+kubectl apply -f ms-publicaciones-service.yml
+
+kubectl apply -f ms-catalogo-deployment.yml
+kubectl apply -f ms-catalogo-service.yml
+
+kubectl apply -f ms-sincronizacion-deployment.yml
+kubectl apply -f ms-sincronizacion-service.yml
+
+kubectl apply -f authservice-deployment.yml
+kubectl apply -f authservice-service.yml
+
+# API Gateway
+kubectl apply -f .\api-gateway-config.yaml 
+kubectl apply -f ms-api-gateway-deployment.yml
+kubectl apply -f ms-api-gateway-service.yml
+
+kubectl port-forward svc/ms-api-gateway-svc 8000:8000
+kubectl port-forward svc/ms-api-gateway-svc 8000:8000
+
+
+http://localhost:8000/swagger-ui/index.html
+
